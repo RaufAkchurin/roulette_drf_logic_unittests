@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 
-from roulette_project.roulette_app.models import SpinRound
-from roulette_project.roulette_app.serializers import SpinListSerializer
+from roulette_app.models import SpinRound
+from roulette_app.serializers import SpinListSerializer
 
 
 # Create your views here.
 
-class SpinViewSet(viewsets.ModelViewSet):
+class RoundsViewSet(viewsets.ModelViewSet):
     queryset = SpinRound.objects.all()
     serializer_class = SpinListSerializer
 

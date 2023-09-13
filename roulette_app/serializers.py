@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from roulette_project.roulette_app.models import SpinRound
+from roulette_app.models import SpinRound
 
 
 class SpinListSerializer(serializers.ModelSerializer):

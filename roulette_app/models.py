@@ -5,15 +5,16 @@ from django.db import models
 # Create your models here.
 
 class SpinRound(models.Model):
-    round = models.IntegerField(default=0)
+    round = models.IntegerField(default=1)
     user = models.CharField(max_length=10)
     last_step = models.IntegerField(
-        validators=[MaxValueValidator(limit_value=11),
-                    MinValueValidator(limit_value=0, message="last_step не должен быть меньше 0.")]
+        validators=[MaxValueValidator(limit_value=11, message="last_step не должен быть больше 11."),
+                    MinValueValidator(limit_value=0, message="last_step не должен быть меньше 0.")],
     )
+    rest_values = models.CharField(default='{1:20, 2:100, 3:45}', max_length=35)
 
     def __str__(self):
-        return f"{self.pk}"
+        return f"{self.round} round / {self.pk} id"
 
     class Meta:
         # Уникальность комбинации round и last_step

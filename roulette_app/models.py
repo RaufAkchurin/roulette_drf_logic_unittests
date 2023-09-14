@@ -9,7 +9,8 @@ class SpinRound(models.Model):
     user = models.CharField(max_length=10)
     last_step = models.IntegerField(
         validators=[MaxValueValidator(limit_value=11, message="last_step не должен быть больше 11."),
-                    MinValueValidator(limit_value=0, message="last_step не должен быть меньше 0.")],
+                    MinValueValidator(limit_value=1, message="last_step не должен быть меньше 0.")],
+        default=1
     )
     rest_values = models.CharField(default='1,2,3,4,5,6,7,8,9,10', max_length=35)
     finished = models.BooleanField(default=False)

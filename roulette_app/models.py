@@ -11,7 +11,8 @@ class SpinRound(models.Model):
         validators=[MaxValueValidator(limit_value=11, message="last_step не должен быть больше 11."),
                     MinValueValidator(limit_value=0, message="last_step не должен быть меньше 0.")],
     )
-    rest_values = models.CharField(default='{1:20, 2:100, 3:45}', max_length=35)
+    rest_values = models.CharField(default='1,2,3,4,5,6,7,8,9,10', max_length=35)
+    finished = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.round} round / {self.pk} id"

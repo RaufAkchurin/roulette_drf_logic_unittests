@@ -38,7 +38,7 @@ class SpinView(viewsets.ModelViewSet):
         #  Проверка, что раунд неактуален
         if SpinRound.objects.order_by("round").exists():
             latest_round = SpinRound.objects.order_by("round").last().round
-            if round < latest_round:
+            if int(round) < int(latest_round):
                 raise ValidationError("Your round is irrelevant")
 
         # TODO тестами покрыть
@@ -70,7 +70,7 @@ class SpinView(viewsets.ModelViewSet):
             num, rest_values = get_random_from_array(latest_spin)
             new_spin = SpinRound.objects.create(
                 user=user,
-                round=round + 1,
+                round=int(round) + 1,
                 rest_values=rest_values
             )
             serialized_data = SpinSerializer(new_spin).data

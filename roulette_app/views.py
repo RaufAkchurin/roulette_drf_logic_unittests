@@ -24,9 +24,12 @@ class SpinView(viewsets.ModelViewSet):
         round_last_step = latest_spin.last_step
         round_finished = SpinRound.objects.filter(round=round, finished=True).exists()
 
+        #  Проверка, что раунд неактуален
+        latest_round = SpinRound.objects.order_by("round").last().round
+        if round < latest_round:
+            raise ValidationError("Your round is irrelevant")
+
         # TODO тестами покрыть
-        # TODO убрать ласт степ из объязательных параметров запроса
-        # TODO избавиться от 500 если были значения
 
         if not round_finished:
             if round_last_step <= 9:
@@ -52,12 +55,14 @@ class SpinView(viewsets.ModelViewSet):
                 return Response(data=serialized_data, status=status.HTTP_200_OK)
 
         if round_finished:
+            num, rest_values = get_random_from_array(latest_spin)
             new_spin = SpinRound.objects.create(
                 user=user,
                 round=round + 1,
-                last_step=1
+                rest_values=rest_values
             )
             serialized_data = SpinSerializer(new_spin).data
+            serialized_data.update({"num": num})
             return Response(data=serialized_data, status=status.HTTP_200_OK)
         else:
             raise ValidationError("Unknown mistake in server")

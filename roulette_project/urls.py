@@ -25,5 +25,5 @@ router.register(r'spin', SpinView)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include(router.urls), {"patch": "update"})
+    path('api/', include(router.urls), {"patch": "update"}, name="spin")
 ]

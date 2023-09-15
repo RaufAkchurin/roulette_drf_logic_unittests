@@ -19,11 +19,8 @@ from rest_framework.routers import DefaultRouter
 
 from roulette_app.views import RoundsListViewSet, SpinView
 
-router = DefaultRouter()
-router.register(r'rounds', RoundsListViewSet)
-router.register(r'spin', SpinView)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include(router.urls), {"patch": "update"}, name="spin")
+    path("v1/", include(("roulette_app.urls", "v1"), namespace="v1")),
 ]

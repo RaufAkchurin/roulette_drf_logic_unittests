@@ -25,9 +25,10 @@ class SpinView(viewsets.ModelViewSet):
         round_finished = SpinRound.objects.filter(round=round, finished=True).exists()
 
         #  Проверка, что раунд неактуален
-        latest_round = SpinRound.objects.order_by("round").last().round
-        if round < latest_round:
-            raise ValidationError("Your round is irrelevant")
+        if SpinRound.objects.order_by("round").exists():
+            latest_round = SpinRound.objects.order_by("round").last().round
+            if round < latest_round:
+                raise ValidationError("Your round is irrelevant")
 
         # TODO тестами покрыть
 

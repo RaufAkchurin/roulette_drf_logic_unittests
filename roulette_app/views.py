@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -18,34 +18,34 @@ class SpinView(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         user = request.data.get("user")
+
+         #  Проверка наличия первого раунда
+        if not SpinRound.objects.exists():
+            num, rest_values = get_random_from_array(start_round=True)
+            new_spin = SpinRound.objects.create(
+                user=user,
+                rest_values=rest_values,
+            )
+            serialized_data = SpinSerializer(new_spin).data
+            serialized_data.update({"num": num})
+            return Response(data=serialized_data, status=status.HTTP_200_OK)
+
         round = request.data.get("round")
 
-        #TODO написать тесты
-        #TODO отрефакторить  get_random_from_array чтобы принимал не спин а рест_вэльюс
-        #TODO затем написать логику для первого элемента
-
-        #  Проверка наличия первого раунда
-        # if not SpinRound.objects.exists():
-        #     SpinRound.objects.create(
-        #         user=user,
-        #         rest_values='1,2,3,4,5,6,7,8,9,10',
-        #     )
+        # last round checker:
+        last_round_db = SpinRound.objects.order_by("round").last().round
+        if int(round) < int(last_round_db):
+            raise ValidationError("Sorry you round is not latest")
 
         latest_spin = SpinRound.objects.filter(round=round).order_by("-last_step").first()
         round_last_step = latest_spin.last_step
         round_finished = SpinRound.objects.filter(round=round, finished=True).exists()
 
-        #  Проверка, что раунд неактуален
-        if SpinRound.objects.order_by("round").exists():
-            latest_round = SpinRound.objects.order_by("round").last().round
-            if int(round) < int(latest_round):
-                raise ValidationError("Your round is irrelevant")
-
         # TODO тестами покрыть
 
         if not round_finished:
             if round_last_step <= 9:
-                num, rest_values = get_random_from_array(latest_spin)
+                num, rest_values = get_random_from_array(latest_spin.rest_values)
                 new_spin = SpinRound.objects.create(
                     user=user,
                     round=round,
@@ -67,7 +67,7 @@ class SpinView(viewsets.ModelViewSet):
                 return Response(data=serialized_data, status=status.HTTP_200_OK)
 
         if round_finished:
-            num, rest_values = get_random_from_array(latest_spin)
+            num, rest_values = get_random_from_array(start_round=True)
             new_spin = SpinRound.objects.create(
                 user=user,
                 round=int(round) + 1,
@@ -80,9 +80,11 @@ class SpinView(viewsets.ModelViewSet):
             raise ValidationError("Unknown mistake in server")
 
 
-def get_random_from_array(spin: SpinRound) -> Tuple[int, str]:
-    rest_values = spin.rest_values.split(",")
+def get_random_from_array(start_round: bool = False, rest_values: Optional[str] = None) -> Tuple[int, str]:
+    if start_round:
+        rest_values = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+    else:
+        rest_values = rest_values.split(",")
     random_num = random.choice(rest_values)
     rest_values.remove(random_num)
     return int(random_num), ",".join(rest_values)
-

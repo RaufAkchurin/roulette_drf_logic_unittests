@@ -16,6 +16,16 @@ class SpinView(viewsets.ModelViewSet):
     queryset = SpinRound.objects.all()
     serializer_class = SpinSerializer
 
+    #TODO сделать модель юзера и внедрить
+    #TODO тесты ендпоинт статистики
+    #TODO сделаеть ендпоинт статистики
+    #TODO отрефакторить убрать из модели рест вэлью по умолчанию
+    #TODO отрефакторить гет номер чтобы без стринги работало
+    #TODO отрефакторить респонсы в отельный метод попытаться вынести
+    #TODO внедрить весы
+    #TODO упаковать в докер
+
+
     def create(self, request, *args, **kwargs):
         user = request.data.get("user")
 
@@ -40,8 +50,6 @@ class SpinView(viewsets.ModelViewSet):
         latest_spin = SpinRound.objects.filter(round=round).order_by("-last_step").first()
         round_last_step = latest_spin.last_step
         round_finished = SpinRound.objects.filter(round=round, finished=True).exists()
-
-        # TODO тестами покрыть
 
         if not round_finished:
             if round_last_step <= 9:

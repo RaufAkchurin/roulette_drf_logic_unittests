@@ -20,6 +20,17 @@ class SpinView(viewsets.ModelViewSet):
         user = request.data.get("user")
         round = request.data.get("round")
 
+        #TODO написать тесты
+        #TODO отрефакторить  get_random_from_array чтобы принимал не спин а рест_вэльюс
+        #TODO затем написать логику для первого элемента
+
+        #  Проверка наличия первого раунда
+        # if not SpinRound.objects.exists():
+        #     SpinRound.objects.create(
+        #         user=user,
+        #         rest_values='1,2,3,4,5,6,7,8,9,10',
+        #     )
+
         latest_spin = SpinRound.objects.filter(round=round).order_by("-last_step").first()
         round_last_step = latest_spin.last_step
         round_finished = SpinRound.objects.filter(round=round, finished=True).exists()

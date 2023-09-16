@@ -7,7 +7,7 @@ from roulette_app.models import SpinRound, User
 from roulette_app.serializers import SpinSerializer, StatisticSerializer
 
 
-class StatisticViewSet(viewsets.ModelViewSet):
+class StatisticView(viewsets.ModelViewSet):
     queryset = SpinRound.objects.all()
     serializer_class = StatisticSerializer
 

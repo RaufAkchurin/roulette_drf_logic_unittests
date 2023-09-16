@@ -36,7 +36,6 @@ class SpinTestCase(APITestCase):
         self.assertEqual(response.data["finished"], True)
 
     def test_auto_create_new_round_after_finished(self):
-
         SpinRound.objects.create(user=self.user_one, round=1, finished=True)
         response = self.client.post(data={"user": self.user_one.pk, "round": 1}, path=self.url)
 
@@ -59,3 +58,11 @@ class SpinTestCase(APITestCase):
     def test_without_round(self):
         response = self.client.post(data={"user": self.user_one.pk}, path=self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class StatisticTestCase(APITestCase):
+    def setUp(self) -> None:
+        self.url = reverse("v1:statistic")
+
+    def test_url(self):
+        self.assertEqual(self.url, "/v1/statistic")

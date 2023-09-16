@@ -63,6 +63,12 @@ class SpinTestCase(APITestCase):
 class StatisticTestCase(APITestCase):
     def setUp(self) -> None:
         self.url = reverse("v1:statistic")
+        self.user_one = User.objects.create(username="user_one")
+        SpinRound.objects.create(user=self.user_one, round=1)
 
     def test_url(self):
         self.assertEqual(self.url, "/v1/statistic")
+
+    def test_simple(self):
+        response = (self.client.get(path=self.url))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -4,9 +4,10 @@ from roulette_app.models import SpinRound
 
 
 class StatisticSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = SpinRound
-        fields = '__all__'
+        fields = "__all__"
 
 
 class SpinSerializer(serializers.ModelSerializer):

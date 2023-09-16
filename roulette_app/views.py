@@ -3,33 +3,58 @@ from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 import random
+
+from rest_framework.views import APIView
+
 from roulette_app.models import SpinRound, User
-from roulette_app.serializers import SpinSerializer, StatisticSerializer
+from roulette_app.serializers import SpinSerializer
 
 
-class StatisticView(viewsets.ModelViewSet):
-    queryset = SpinRound.objects.all()
-    serializer_class = StatisticSerializer
+# TODO доработать уникальность выпадающих значений
+# TODO тест на уникальность значений
+
+class StatisticView(APIView):
+    def get(self, request, *args, **kwargs):
+        if SpinRound.objects.exists():
+            rounds = SpinRound.objects.values("round").distinct()
+            rounds_list = [item['round'] for item in rounds if 'round' in item]
+
+            # total_steps = queryset.aggregate(total_steps=Sum('last_step'))['total_steps']
+            # avg_steps_per_round = total_steps / total_rounds if total_rounds else 0
+
+            rounds_statistic = {}
+            for round in rounds_list:
+                users_in_round = SpinRound.objects.filter(round=round).values("user_id").count()
+                rounds_statistic.update({round: users_in_round})
+
+            # most_active_users = SpinRound.objects.
+
+            response_data = {
+                "rounds_statistic": rounds_statistic
+            }
+
+            return Response(response_data, status=status.HTTP_207_MULTI_STATUS)
+        else:
+            return Response({'detail': 'Statistic is empty, try to play'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class SpinView(viewsets.ModelViewSet):
     queryset = SpinRound.objects.all()
     serializer_class = SpinSerializer
 
-    #TODO тесты ендпоинт статистики
-    #TODO сделаеть ендпоинт статистики
-    #TODO отрефакторить убрать из модели рест вэлью по умолчанию
-    #TODO отрефакторить гет номер чтобы без стринги работало
-    #TODO отрефакторить респонсы в отельный метод попытаться вынести
-    #TODO внедрить весы
-    #TODO упаковать в докер
-
+    # TODO тесты ендпоинт статистики
+    # TODO сделаеть ендпоинт статистики
+    # TODO отрефакторить убрать из модели рест вэлью по умолчанию
+    # TODO отрефакторить гет номер чтобы без стринги работало
+    # TODO отрефакторить респонсы в отельный метод попытаться вынести
+    # TODO внедрить весы
+    # TODO упаковать в докер
 
     def create(self, request, *args, **kwargs):
         user_id = request.data.get("user")
         user = User.objects.filter(id=user_id).last()
 
-         #  Проверка наличия первого раунда
+        #  Проверка наличия первого раунда
         if not SpinRound.objects.exists():
             num, rest_values = get_random_from_array(start_round=True)
             new_spin = SpinRound.objects.create(

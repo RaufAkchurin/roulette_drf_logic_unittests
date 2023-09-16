@@ -4,19 +4,18 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 import random
 from roulette_app.models import SpinRound, User
-from roulette_app.serializers import RoundListSerializer, SpinSerializer
+from roulette_app.serializers import SpinSerializer, StatisticSerializer
 
 
 class StatisticViewSet(viewsets.ModelViewSet):
     queryset = SpinRound.objects.all()
-    serializer_class = RoundListSerializer
+    serializer_class = StatisticSerializer
 
 
 class SpinView(viewsets.ModelViewSet):
     queryset = SpinRound.objects.all()
     serializer_class = SpinSerializer
 
-    #TODO сделать модель юзера и внедрить
     #TODO тесты ендпоинт статистики
     #TODO сделаеть ендпоинт статистики
     #TODO отрефакторить убрать из модели рест вэлью по умолчанию

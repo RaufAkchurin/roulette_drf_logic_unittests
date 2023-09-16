@@ -7,4 +7,6 @@ urlpatterns = [
         "spin",
         SpinView.as_view({'post': 'create'}),
         name="spin",
-    )]
+    )
+
+]

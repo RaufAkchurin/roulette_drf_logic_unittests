@@ -3,11 +3,11 @@ from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 import random
-from roulette_app.models import SpinRound
+from roulette_app.models import SpinRound, User
 from roulette_app.serializers import RoundListSerializer, SpinSerializer
 
 
-class RoundsListViewSet(viewsets.ModelViewSet):
+class StatisticViewSet(viewsets.ModelViewSet):
     queryset = SpinRound.objects.all()
     serializer_class = RoundListSerializer
 
@@ -27,7 +27,8 @@ class SpinView(viewsets.ModelViewSet):
 
 
     def create(self, request, *args, **kwargs):
-        user = request.data.get("user")
+        user_id = request.data.get("user")
+        user = User.objects.filter(id=user_id).last()
 
          #  Проверка наличия первого раунда
         if not SpinRound.objects.exists():

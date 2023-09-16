@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from roulette_app.views import RoundsListViewSet, SpinView
+from roulette_app.views import SpinView
 
 
 urlpatterns = [

@@ -62,11 +62,10 @@ class SpinView(viewsets.ModelViewSet):
         #  Проверка наличия первого раунда
         if not Spin.objects.exists():
             round_new = Round.objects.create()
-            num, rest_values = get_random_from_array(start_round=True)
+            num = 0
             new_spin = Spin.objects.create(
                 user=user,
                 round=round_new,
-                rest_values=rest_values,
             )
             serialized_data = SpinSerializer(new_spin).data
             serialized_data.update({"num": num})
@@ -74,26 +73,25 @@ class SpinView(viewsets.ModelViewSet):
 
         round = request.data.get("round", None)
 
-        # last round checker:
         # last_round_db = Spin.objects.order_by("round").last().round
-        # last_round_db = Round.objects.values("id")
         # if int(round) < int(last_round_db):
         #     raise ValidationError("Sorry you round is not latest")
 
-        latest_spin = Spin.objects.filter(round=round).order_by("-last_step").first()
-        round_last_step = latest_spin.last_step
+        latest_spin = Spin.objects.last()
         round_finished = Spin.objects.filter(round=round, finished=True).exists()
+        round_actual = Round.objects.filter(id=round).last()
+        round_last_step = len(round_actual.numbers.items())
 
         if not round_finished:
             if round_last_step <= 9:
-                round_actual = Round.objects.filter(id=round).last()
-                num, rest_values = get_random_from_array(latest_spin.rest_values)
+                num = 0
                 new_spin = Spin.objects.create(
                     user=user,
                     round=round_actual,
-                    last_step=round_last_step + 1,
-                    rest_values=rest_values
                 )
+                round_actual.numbers.update({num: user})
+                # round_actual.save()
+                round_actual.refresh_from_db()
                 serialized_data = SpinSerializer(new_spin).data
                 serialized_data.update({"num": num})
                 return Response(data=serialized_data, status=status.HTTP_200_OK)
@@ -109,12 +107,11 @@ class SpinView(viewsets.ModelViewSet):
                 return Response(data=serialized_data, status=status.HTTP_200_OK)
 
         if round_finished:
-            num, rest_values = get_random_from_array(start_round=True)
+            num = 0
             round_new = Round.objects.create()
             new_spin = Spin.objects.create(
                 user=user,
                 round=round_new,
-                rest_values=rest_values
             )
             serialized_data = SpinSerializer(new_spin).data
             serialized_data.update({"num": num})
@@ -122,16 +119,16 @@ class SpinView(viewsets.ModelViewSet):
         else:
             raise ValidationError("Unknown mistake in server")
 
+# def get_random_from_array(start_round: bool = False, rest_values: Optional[str] = None) -> Tuple[int, str]:
+#     if start_round:
+#         rest_values = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+#     else:
+#         rest_values = rest_values.split(",")
+#     random_num = random.choice(rest_values)
+#     rest_values.remove(random_num)
+#     return int(random_num), ",".join(rest_values)
 
-def get_random_from_array(start_round: bool = False, rest_values: Optional[str] = None) -> Tuple[int, str]:
-    if start_round:
-        rest_values = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-    else:
-        rest_values = rest_values.split(",")
-    random_num = random.choice(rest_values)
-    rest_values.remove(random_num)
-    return int(random_num), ",".join(rest_values)
-
+#TODO внедрить запись логов
 # TODO доработать уникальность выпадающих значений
 # TODO тест на уникальность значений
 

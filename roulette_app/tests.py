@@ -26,10 +26,9 @@ class SpinTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["round"], 1)
         self.assertEqual(response.data["user"], 1)
-        self.assertEqual(response.data["last_step"], 2)
 
     def test_jackpot_after_10th_spin(self):
-        Spin.objects.create(user=self.user_one, round=self.round_one, last_step=10)
+        Spin.objects.create(user=self.user_one, round=self.round_one)
         response = self.client.post(data={"user": self.user_one.pk, "round": self.round_one.id}, path=self.url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -42,7 +41,6 @@ class SpinTestCase(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["round"], 2)
-        self.assertEqual(response.data["last_step"], 1)
 
     def test_create_first_spin_in_db(self):
         response = self.client.post(data={"user": self.user_one.pk, "round": self.round_one.id}, path=self.url)
@@ -85,26 +83,26 @@ class StatisticTestCase(APITestCase):
     def test_simple(self):
         # 1 user
         for i in range(3):
-            Spin.objects.create(round=self.round_one, last_step=i, user=self.user_one)
+            Spin.objects.create(round=self.round_one, user=self.user_one)
 
         # 2 user
 
         for i in range(5):
-            Spin.objects.create(round=self.round_two, last_step=i, user=self.user_two)
+            Spin.objects.create(round=self.round_two, user=self.user_two)
         for i in range(7):
-            Spin.objects.create(round=self.round_three, last_step=i, user=self.user_two)
+            Spin.objects.create(round=self.round_three, user=self.user_two)
 
         # 3 user
         for i in range(4):
-            Spin.objects.create(round=self.round_four, last_step=i, user=self.user_three)
+            Spin.objects.create(round=self.round_four, user=self.user_three)
         for i in range(5):
-            Spin.objects.create(round=self.round_five, last_step=i, user=self.user_three)
+            Spin.objects.create(round=self.round_five,  user=self.user_three)
 
         # 5 user
         for i in range(4):
-            Spin.objects.create(round=self.round_six, last_step=i, user=self.user_five)
+            Spin.objects.create(round=self.round_six,  user=self.user_five)
         for i in range(5):
-            Spin.objects.create(round=self.round_seven, last_step=i, user=self.user_five)
+            Spin.objects.create(round=self.round_seven,  user=self.user_five)
 
         response = (self.client.get(path=self.url))
         self.assertEqual(response.status_code, status.HTTP_200_OK)

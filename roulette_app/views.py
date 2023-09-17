@@ -4,15 +4,10 @@ from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 import random
-from django.db.models.functions import Cast
 from rest_framework.views import APIView
 
 from roulette_app.models import SpinRound, User
 from roulette_app.serializers import SpinSerializer
-
-
-# TODO доработать уникальность выпадающих значений
-# TODO тест на уникальность значений
 
 class StatisticView(APIView):
     def get(self, request, *args, **kwargs):
@@ -58,12 +53,6 @@ class StatisticView(APIView):
 class SpinView(viewsets.ModelViewSet):
     queryset = SpinRound.objects.all()
     serializer_class = SpinSerializer
-
-    # TODO отрефакторить убрать из модели рест вэлью по умолчанию
-    # TODO отрефакторить гет номер чтобы без стринги работало
-    # TODO отрефакторить респонсы в отельный метод попытаться вынести
-    # TODO внедрить весы
-    # TODO упаковать в докер
 
     def create(self, request, *args, **kwargs):
         user_id = request.data.get("user")
@@ -137,4 +126,16 @@ def get_random_from_array(start_round: bool = False, rest_values: Optional[str] 
     rest_values.remove(random_num)
     return int(random_num), ",".join(rest_values)
 
+
+# TODO доработать уникальность выпадающих значений
+# TODO тест на уникальность значений
+
+#TODO запись значений в таблицу реализовать
+
 #TODO только самые бооольшие 3 значения в статистике сделать
+#TODO отрефакторить убрать из модели рест вэлью по умолчанию
+#TODO отрефакторить гет номер чтобы без стринги работало
+
+# TODO отрефакторить респонсы в отельный метод попытаться вынести
+# TODO внедрить весы
+# TODO упаковать в докер

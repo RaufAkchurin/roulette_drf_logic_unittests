@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from roulette_app.models import SpinRound, User
 from roulette_app.serializers import SpinSerializer
 
+
 class StatisticView(APIView):
     def get(self, request, *args, **kwargs):
         if SpinRound.objects.exists():
@@ -126,15 +127,14 @@ def get_random_from_array(start_round: bool = False, rest_values: Optional[str] 
     rest_values.remove(random_num)
     return int(random_num), ",".join(rest_values)
 
-
 # TODO доработать уникальность выпадающих значений
 # TODO тест на уникальность значений
 
-#TODO запись значений в таблицу реализовать
+# TODO запись значений в таблицу реализовать
 
-#TODO только самые бооольшие 3 значения в статистике сделать
-#TODO отрефакторить убрать из модели рест вэлью по умолчанию
-#TODO отрефакторить гет номер чтобы без стринги работало
+# TODO только самые бооольшие 3 значения в статистике сделать
+# TODO отрефакторить убрать из модели рест вэлью по умолчанию
+# TODO отрефакторить гет номер чтобы без стринги работало
 
 # TODO отрефакторить респонсы в отельный метод попытаться вынести
 # TODO внедрить весы

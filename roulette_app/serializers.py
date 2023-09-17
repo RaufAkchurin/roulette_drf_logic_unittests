@@ -1,12 +1,12 @@
 from rest_framework import serializers
 
-from roulette_app.models import SpinRound
+from roulette_app.models import Spin
 
 
 class StatisticSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = SpinRound
+        model = Spin
         fields = "__all__"
 
 
@@ -14,7 +14,7 @@ class SpinSerializer(serializers.ModelSerializer):
     last_step = serializers.IntegerField(required=False)
 
     class Meta:
-        model = SpinRound
+        model = Spin
         fields = (
             "user",
             "round",

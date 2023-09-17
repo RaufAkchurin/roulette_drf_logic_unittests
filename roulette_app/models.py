@@ -5,9 +5,19 @@ from django.db import models
 
 # Create your models here.
 
+class Round(models.Model):
+    numbers = models.JSONField(default=list)
 
-class SpinRound(models.Model):
-    round = models.IntegerField(default=1)
+    def __str__(self):
+        return f"id - {self.id}, numbers - {self.numbers}"
+
+
+class Spin(models.Model):
+    round = models.ForeignKey(
+        Round,
+        on_delete=models.CASCADE,
+        related_name="round_log",
+    )
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -28,7 +38,6 @@ class SpinRound(models.Model):
     class Meta:
         # Уникальность комбинации round и last_step
         unique_together = ('round', 'last_step')
-
 
 
 

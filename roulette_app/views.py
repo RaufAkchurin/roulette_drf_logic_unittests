@@ -6,23 +6,23 @@ from rest_framework.response import Response
 import random
 from rest_framework.views import APIView
 
-from roulette_app.models import SpinRound, User
+from roulette_app.models import Spin, User, Round
 from roulette_app.serializers import SpinSerializer
 
 
 class StatisticView(APIView):
     def get(self, request, *args, **kwargs):
-        if SpinRound.objects.exists():
-            rounds = SpinRound.objects.values("round").distinct()
+        if Spin.objects.exists():
+            rounds = Spin.objects.values("round").distinct()
             rounds_list = [item['round'] for item in rounds if 'round' in item]
 
             rounds_statistic = {}
             for round in rounds_list:
-                users_in_round = SpinRound.objects.filter(round=round).values("user_id").distinct().count()
+                users_in_round = Spin.objects.filter(round=round).values("user_id").distinct().count()
                 rounds_statistic.update({round: users_in_round})
 
             active_users = {}
-            spin_all = SpinRound.objects.all()
+            spin_all = Spin.objects.all()
             users_all = User.objects.all()
 
             count = 0
@@ -52,7 +52,7 @@ class StatisticView(APIView):
 
 
 class SpinView(viewsets.ModelViewSet):
-    queryset = SpinRound.objects.all()
+    queryset = Spin.objects.all()
     serializer_class = SpinSerializer
 
     def create(self, request, *args, **kwargs):
@@ -60,33 +60,37 @@ class SpinView(viewsets.ModelViewSet):
         user = User.objects.filter(id=user_id).last()
 
         #  Проверка наличия первого раунда
-        if not SpinRound.objects.exists():
+        if not Spin.objects.exists():
+            round_new = Round.objects.create()
             num, rest_values = get_random_from_array(start_round=True)
-            new_spin = SpinRound.objects.create(
+            new_spin = Spin.objects.create(
                 user=user,
+                round=round_new,
                 rest_values=rest_values,
             )
             serialized_data = SpinSerializer(new_spin).data
             serialized_data.update({"num": num})
             return Response(data=serialized_data, status=status.HTTP_200_OK)
 
-        round = request.data.get("round")
+        round = request.data.get("round", None)
 
         # last round checker:
-        last_round_db = SpinRound.objects.order_by("round").last().round
-        if int(round) < int(last_round_db):
-            raise ValidationError("Sorry you round is not latest")
+        # last_round_db = Spin.objects.order_by("round").last().round
+        # last_round_db = Round.objects.values("id")
+        # if int(round) < int(last_round_db):
+        #     raise ValidationError("Sorry you round is not latest")
 
-        latest_spin = SpinRound.objects.filter(round=round).order_by("-last_step").first()
+        latest_spin = Spin.objects.filter(round=round).order_by("-last_step").first()
         round_last_step = latest_spin.last_step
-        round_finished = SpinRound.objects.filter(round=round, finished=True).exists()
+        round_finished = Spin.objects.filter(round=round, finished=True).exists()
 
         if not round_finished:
             if round_last_step <= 9:
+                round_actual = Round.objects.filter(id=round).last()
                 num, rest_values = get_random_from_array(latest_spin.rest_values)
-                new_spin = SpinRound.objects.create(
+                new_spin = Spin.objects.create(
                     user=user,
-                    round=round,
+                    round=round_actual,
                     last_step=round_last_step + 1,
                     rest_values=rest_values
                 )
@@ -106,9 +110,10 @@ class SpinView(viewsets.ModelViewSet):
 
         if round_finished:
             num, rest_values = get_random_from_array(start_round=True)
-            new_spin = SpinRound.objects.create(
+            round_new = Round.objects.create()
+            new_spin = Spin.objects.create(
                 user=user,
-                round=int(round) + 1,
+                round=round_new,
                 rest_values=rest_values
             )
             serialized_data = SpinSerializer(new_spin).data

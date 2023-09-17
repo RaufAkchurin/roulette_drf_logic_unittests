@@ -1,9 +1,8 @@
-from django.contrib import admin
 from django.contrib.admin.sites import site
-from django.contrib.auth.models import User
 
-from roulette_app.models import SpinRound
+from roulette_app.models import Spin, Round
 
 # Register your models here.
 
-site.register(SpinRound)
+site.register(Spin)
+site.register(Round)

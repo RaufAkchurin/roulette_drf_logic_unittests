@@ -1,4 +1,6 @@
 from typing import Tuple, Optional
+
+from django.db.models import Sum, Count
 from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -9,7 +11,7 @@ from rest_framework.views import APIView
 from roulette_app.models import SpinRound, User
 from roulette_app.serializers import SpinSerializer
 
-
+# TODO rounds_count неправильно считает
 # TODO доработать уникальность выпадающих значений
 # TODO тест на уникальность значений
 
@@ -19,21 +21,35 @@ class StatisticView(APIView):
             rounds = SpinRound.objects.values("round").distinct()
             rounds_list = [item['round'] for item in rounds if 'round' in item]
 
-            # total_steps = queryset.aggregate(total_steps=Sum('last_step'))['total_steps']
-            # avg_steps_per_round = total_steps / total_rounds if total_rounds else 0
-
             rounds_statistic = {}
             for round in rounds_list:
                 users_in_round = SpinRound.objects.filter(round=round).values("user_id").count()
                 rounds_statistic.update({round: users_in_round})
 
-            # most_active_users = SpinRound.objects.
+            active_users = {}
+            total_rounds_by_user = User.objects.annotate(total_rounds=Count('user__round'))
+            spin_all = SpinRound.objects.all()
+
+            count = 0
+            for user in total_rounds_by_user:
+                if user.total_rounds:
+                    count += 1
+                    total_spin = spin_all.filter(user=user.id).count()
+                    active_users.update({
+                        f"{count}":
+                            {
+                                "id": user.pk,
+                                "rounds_count": user.total_rounds,
+                                "total_spin": total_spin
+                            }}
+                    )
 
             response_data = {
-                "rounds_statistic": rounds_statistic
+                "rounds_statistic": rounds_statistic,
+                "active_users": active_users
             }
 
-            return Response(response_data, status=status.HTTP_207_MULTI_STATUS)
+            return Response(response_data, status=status.HTTP_200_OK)
         else:
             return Response({'detail': 'Statistic is empty, try to play'}, status=status.HTTP_204_NO_CONTENT)
 

@@ -23,7 +23,7 @@ class SpinRound(models.Model):
     created_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.round} round / {self.pk} id"
+        return f"{self.round} round / {self.user_id} user_id / {self.pk} id"
 
     class Meta:
         # Уникальность комбинации round и last_step

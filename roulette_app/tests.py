@@ -19,10 +19,15 @@ class SpinTestCase(APITestCase):
         self.assertEqual(self.url, "/v1/spin")
 
     def test_spin(self):
-        # TODO remove this after wrote first checker logic
-        Spin.objects.create(user=self.user_one, round=self.round_one)
-
         response = self.client.post(data={"user": self.user_one.pk, "round": self.round_one.pk}, path=self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["round"], 1)
+        self.assertEqual(response.data["user"], 1)
+
+    def test_check_deleting_from_rest_values(self):
+        round_new = Round.objects.create(numbers={5: self.user_one.pk})
+
+        response = self.client.post(data={"user": self.user_one.pk, "round": round_new.pk}, path=self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["round"], 1)
         self.assertEqual(response.data["user"], 1)
@@ -96,13 +101,13 @@ class StatisticTestCase(APITestCase):
         for i in range(4):
             Spin.objects.create(round=self.round_four, user=self.user_three)
         for i in range(5):
-            Spin.objects.create(round=self.round_five,  user=self.user_three)
+            Spin.objects.create(round=self.round_five, user=self.user_three)
 
         # 5 user
         for i in range(4):
-            Spin.objects.create(round=self.round_six,  user=self.user_five)
+            Spin.objects.create(round=self.round_six, user=self.user_five)
         for i in range(5):
-            Spin.objects.create(round=self.round_seven,  user=self.user_five)
+            Spin.objects.create(round=self.round_seven, user=self.user_five)
 
         response = (self.client.get(path=self.url))
         self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -60,9 +60,9 @@ class SpinView(viewsets.ModelViewSet):
         user = User.objects.filter(id=user_id).last()
 
         #  Проверка наличия первого раунда
-        if not Spin.objects.exists():
+        if not Round.objects.exists():
             round_new = Round.objects.create()
-            num = 0
+            num = get_random_from_dict_with_weith(round_new)
             new_spin = Spin.objects.create(
                 user=user,
                 round=round_new,
@@ -84,18 +84,16 @@ class SpinView(viewsets.ModelViewSet):
 
         if not round_finished:
             if round_last_step <= 9:
-                num = 0
+                num = get_random_from_dict_with_weith(round_actual)
                 new_spin = Spin.objects.create(
                     user=user,
                     round=round_actual,
                 )
                 round_actual.numbers.update({num: user})
-                # round_actual.save()
                 round_actual.refresh_from_db()
                 serialized_data = SpinSerializer(new_spin).data
                 serialized_data.update({"num": num})
                 return Response(data=serialized_data, status=status.HTTP_200_OK)
-                # TODO записать в логи наше число и номер степа
 
             if round_last_step == 10:  # Jackpot
                 latest_spin.finished = True
@@ -119,6 +117,7 @@ class SpinView(viewsets.ModelViewSet):
         else:
             raise ValidationError("Unknown mistake in server")
 
+
 # def get_random_from_array(start_round: bool = False, rest_values: Optional[str] = None) -> Tuple[int, str]:
 #     if start_round:
 #         rest_values = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
@@ -128,16 +127,36 @@ class SpinView(viewsets.ModelViewSet):
 #     rest_values.remove(random_num)
 #     return int(random_num), ",".join(rest_values)
 
-#TODO внедрить запись логов
+def get_random_from_dict_with_weith(round: Round):
+    defaul_values = {1: 20, 2: 100, 3: 45, 4: 70, 5: 15, 6: 140, 7: 20, 8: 20, 9: 140, 10: 45}
+    if len(round.numbers) == 0:
+        rest_values = {1: 20, 2: 100, 3: 45, 4: 70, 5: 15, 6: 140, 7: 20, 8: 20, 9: 140, 10: 45}
+
+    else:
+        for number in round.numbers:
+            defaul_values.pop(int(number), None)
+        rest_values = defaul_values
+
+    # Сумма всех вероятностей
+    total_prob = sum(rest_values.values())
+
+    # Генерация случайного числа в диапазоне от 1 до суммы вероятностей
+    rand_num = random.randint(1, total_prob)
+
+    # Перебор ключей и вычитание вероятности каждого ключа
+    for key, prob in rest_values.items():
+        rand_num -= prob
+        if rand_num <= 0:
+            return key
+
+# TODO finish перенести в раунд
+# TODO внедрить запись логов
 # TODO доработать уникальность выпадающих значений
 # TODO тест на уникальность значений
-
-# TODO запись значений в таблицу реализовать
 
 # TODO только самые бооольшие 3 значения в статистике сделать
 # TODO отрефакторить убрать из модели рест вэлью по умолчанию
 # TODO отрефакторить гет номер чтобы без стринги работало
 
 # TODO отрефакторить респонсы в отельный метод попытаться вынести
-# TODO внедрить весы
 # TODO упаковать в докер

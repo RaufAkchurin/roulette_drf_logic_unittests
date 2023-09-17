@@ -1,17 +1,16 @@
 from typing import Tuple, Optional
 
-from django.db.models import Sum, Count
 from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 import random
-
+from django.db.models.functions import Cast
 from rest_framework.views import APIView
 
 from roulette_app.models import SpinRound, User
 from roulette_app.serializers import SpinSerializer
 
-# TODO rounds_count неправильно считает
+
 # TODO доработать уникальность выпадающих значений
 # TODO тест на уникальность значений
 
@@ -23,31 +22,33 @@ class StatisticView(APIView):
 
             rounds_statistic = {}
             for round in rounds_list:
-                users_in_round = SpinRound.objects.filter(round=round).values("user_id").count()
+                users_in_round = SpinRound.objects.filter(round=round).values("user_id").distinct().count()
                 rounds_statistic.update({round: users_in_round})
 
             active_users = {}
-            total_rounds_by_user = User.objects.annotate(total_rounds=Count('user__round'))
             spin_all = SpinRound.objects.all()
+            users_all = User.objects.all()
 
             count = 0
-            for user in total_rounds_by_user:
-                if user.total_rounds:
+            for user in users_all:
+                distinct_rounds = spin_all.filter(user=user.id).values("round").distinct()
+                if distinct_rounds.count():
                     count += 1
                     total_spin = spin_all.filter(user=user.id).count()
                     active_users.update({
                         f"{count}":
                             {
                                 "id": user.pk,
-                                "rounds_count": user.total_rounds,
-                                "total_spin": total_spin
+                                "rounds_count": distinct_rounds.count(),
+                                "spin_per_round": total_spin / distinct_rounds.count(),
+                                "total_spin_optional": total_spin,
                             }}
                     )
 
-            response_data = {
-                "rounds_statistic": rounds_statistic,
-                "active_users": active_users
-            }
+                response_data = {
+                    "rounds_statistic": rounds_statistic,
+                    "active_users": active_users
+                }
 
             return Response(response_data, status=status.HTTP_200_OK)
         else:
@@ -58,8 +59,6 @@ class SpinView(viewsets.ModelViewSet):
     queryset = SpinRound.objects.all()
     serializer_class = SpinSerializer
 
-    # TODO тесты ендпоинт статистики
-    # TODO сделаеть ендпоинт статистики
     # TODO отрефакторить убрать из модели рест вэлью по умолчанию
     # TODO отрефакторить гет номер чтобы без стринги работало
     # TODO отрефакторить респонсы в отельный метод попытаться вынести
@@ -137,3 +136,5 @@ def get_random_from_array(start_round: bool = False, rest_values: Optional[str] 
     random_num = random.choice(rest_values)
     rest_values.remove(random_num)
     return int(random_num), ",".join(rest_values)
+
+#TODO только самые бооольшие 3 значения в статистике сделать

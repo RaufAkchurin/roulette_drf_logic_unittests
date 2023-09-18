@@ -8,6 +8,12 @@ class Round(models.Model):
     numbers = models.JSONField(default=dict)
     finished = models.BooleanField(default=False)
 
+    @classmethod
+    def logging(cls, round, num, user):
+        round.numbers.update({num: user.id})
+        round.save()
+        round.refresh_from_db()
+
     def __str__(self):
         return f"id - {self.id}, numbers - {self.numbers}"
 

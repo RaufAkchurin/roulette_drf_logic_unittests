@@ -68,7 +68,7 @@ class SpinView(viewsets.ModelViewSet):
                 user=user,
                 round=round_new,
             )
-            logging(round_new, num, user)
+            round_new.logging(round_new, num, user)
 
             #  response generation
             serialized_data = SpinSerializer(new_spin).data
@@ -87,7 +87,7 @@ class SpinView(viewsets.ModelViewSet):
                         user=user,
                         round=round_actual,
                     )
-                    logging(round_actual, num, user)
+                    round_actual.logging(round_actual, num, user)
 
                     #  response generation
                     serialized_data = SpinSerializer(new_spin).data
@@ -95,9 +95,11 @@ class SpinView(viewsets.ModelViewSet):
                     return Response(data=serialized_data, status=status.HTTP_200_OK)
 
             if round_last_step == 10:  # Jackpot
-                latest_spin.finished = True
-                latest_spin.save()
-                latest_spin.refresh_from_db()
+                round_actual.finished = True
+                round_actual.save()
+                round_actual.refresh_from_db()
+
+                round_actual.logging(round_actual, 777, user)
 
                 serialized_data = SpinSerializer(latest_spin).data
                 serialized_data.update({"num": 777, "finished": True})
@@ -106,11 +108,6 @@ class SpinView(viewsets.ModelViewSet):
             else:
                 raise ValidationError("Unknown mistake in server")
 
-
-def logging(round, num, user):
-    round.numbers.update({num: user.id})
-    round.save()
-    round.refresh_from_db()
 
 def get_random_from_dict_with_weith(round: Round):
     defaul_values = {1: 20, 2: 100, 3: 45, 4: 70, 5: 15, 6: 140, 7: 20, 8: 20, 9: 140, 10: 45}
@@ -132,9 +129,6 @@ def get_random_from_dict_with_weith(round: Round):
             return key
 
 # TODO только самые бооольшие 3 значения в статистике сделать
-
-# TODO логгинг попробовать занести в методы модели
-
 # TODO отрефакторить респонсы в отельный метод попытаться вынести
 # TODO перепроверить работу весов
 # TODO упаковать в докер

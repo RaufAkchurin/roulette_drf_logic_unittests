@@ -2,9 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework.reverse import reverse
-
 from roulette_app.models import Spin, Round
-
 
 # Create your tests here.
 
@@ -29,7 +27,6 @@ class SpinTestCase(APITestCase):
         # check logging first num
         round_from_db = Round.objects.last()
         self.assertEqual(len(round_from_db.numbers), 1)
-        print(round_from_db.numbers)
 
         # check logging second num
         response = self.client.post(data={"user": self.user_two.pk, "round": 1}, path=self.url)
@@ -63,9 +60,15 @@ class SpinTestCase(APITestCase):
         self.assertEqual(response.data["num"], 777)
         self.assertEqual(response.data["finished"], True)
 
-    def test_create_first_spin_in_db(self):
-        response = self.client.post(data={"user": self.user_one.pk, "round": self.round_one.id}, path=self.url)
+    def test_creating_new_after_finish(self):
+        finished_round = Round.objects.create(finished=True)
+        response = self.client.post(data={"user": self.user_one.pk, "round": finished_round.id}, path=self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["round"], finished_round.id + 1)
+
+        # check logging first num
+        round_from_db = Round.objects.last()
+        self.assertEqual(len(round_from_db.numbers), 1)
 
     def test_empty_user(self):
         response = self.client.post(data={"round": self.round_one.id}, path=self.url)

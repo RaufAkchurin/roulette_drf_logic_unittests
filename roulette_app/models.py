@@ -6,6 +6,7 @@ from django.db import models
 
 class Round(models.Model):
     numbers = models.JSONField(default=dict)
+    finished = models.BooleanField(default=False)
 
     def __str__(self):
         return f"id - {self.id}, numbers - {self.numbers}"
@@ -22,7 +23,7 @@ class Spin(models.Model):
         on_delete=models.CASCADE,
         related_name="user",
     )
-    finished = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.round} round / {self.user_id} user_id / {self.pk} id"

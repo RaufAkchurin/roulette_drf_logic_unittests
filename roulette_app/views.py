@@ -84,12 +84,10 @@ class SpinView(viewsets.ModelViewSet):
             #     raise ValidationError("Sorry you round is not latest")
 
             latest_spin = Spin.objects.last()
-            round = request.data.get("round", None)
-            round_finished = Spin.objects.filter(round=round, finished=True).exists()
             round_actual = Round.objects.last()
             round_last_step = len(round_actual.numbers.items())
 
-            if not round_finished:
+            if not round_actual.finished:
                 if round_last_step <= 9:
                     num = get_random_from_dict_with_weith(round_actual)
                     new_spin = Spin.objects.create(
@@ -115,18 +113,27 @@ class SpinView(viewsets.ModelViewSet):
                 serialized_data.update({"num": 777, "finished": True})
                 return Response(data=serialized_data, status=status.HTTP_200_OK)
 
-        if round_finished:
-            num = get_random_from_dict_with_weith(round_actual)
-            round_new = Round.objects.create()
-            new_spin = Spin.objects.create(
-                user=user,
-                round=round_new,
-            )
-            serialized_data = SpinSerializer(new_spin).data
-            serialized_data.update({"num": num})
-            return Response(data=serialized_data, status=status.HTTP_200_OK)
-        else:
-            raise ValidationError("Unknown mistake in server")
+            # TODO test this please
+            else:
+                try:
+                    num = get_random_from_dict_with_weith(round_actual)
+                    round_new = Round.objects.create()
+                    new_spin = Spin.objects.create(
+                        user=user,
+                        round=round_new,
+                    )
+
+                    #  logging number
+                    round_new.numbers.update({num: user.id})
+                    round_new.save()
+                    round_new.refresh_from_db()
+
+                    #  response generation
+                    serialized_data = SpinSerializer(new_spin).data
+                    serialized_data.update({"num": num})
+                    return Response(data=serialized_data, status=status.HTTP_200_OK)
+                except:
+                    raise ValidationError("Unknown mistake in server")
 
 
 def get_random_from_dict_with_weith(round: Round):
@@ -149,12 +156,11 @@ def get_random_from_dict_with_weith(round: Round):
             return key
 
 
-
-# TODO finish перенести в раунд
-
 # TODO только самые бооольшие 3 значения в статистике сделать
 # TODO отрефакторить убрать из модели рест вэлью по умолчанию
 # TODO отрефакторить гет номер чтобы без стринги работало
 
 # TODO отрефакторить респонсы в отельный метод попытаться вынести
+# TODO перепроверить работу весов
 # TODO упаковать в докер
+

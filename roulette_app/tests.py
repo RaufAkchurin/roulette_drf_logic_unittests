@@ -13,10 +13,40 @@ class SpinTestCase(APITestCase):
     def setUp(self) -> None:
         self.url = reverse("v1:spin")
         self.user_one = User.objects.create(username="user_one")
+        self.user_two = User.objects.create(username="user_two")
         self.round_one = Round.objects.create()
 
     def test_url(self):
         self.assertEqual(self.url, "/v1/spin")
+
+    def test_creating_first_round(self):
+        self.round_one.delete()
+        response = self.client.post(data={"user": self.user_one.pk, "round": 2}, path=self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["round"], 2)  # because first is deleted
+        self.assertEqual(response.data["user"], 1)
+
+        # check logging first num
+        round_from_db = Round.objects.last()
+        self.assertEqual(len(round_from_db.numbers), 1)
+        print(round_from_db.numbers)
+
+        # check logging second num
+        response = self.client.post(data={"user": self.user_two.pk, "round": 1}, path=self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["round"], 2)  # because first is deleted
+        self.assertEqual(response.data["user"], 2)
+
+        round_from_db = Round.objects.last()
+        self.assertEqual(len(round_from_db.numbers), 2)
+
+    def test_unique_numbers(self):
+        for i in range(10):
+            self.client.post(data={"user": self.user_two.pk, "round": 1}, path=self.url)
+
+        round_from_db = Round.objects.last()
+        numbers = set(round_from_db.numbers.keys())
+        self.assertEqual(len(numbers), 10)
 
     def test_spin(self):
         response = self.client.post(data={"user": self.user_one.pk, "round": self.round_one.pk}, path=self.url)
@@ -24,28 +54,14 @@ class SpinTestCase(APITestCase):
         self.assertEqual(response.data["round"], 1)
         self.assertEqual(response.data["user"], 1)
 
-    def test_check_deleting_from_rest_values(self):
-        round_new = Round.objects.create(numbers={5: self.user_one.pk})
-
-        response = self.client.post(data={"user": self.user_one.pk, "round": round_new.pk}, path=self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["round"], 1)
-        self.assertEqual(response.data["user"], 1)
-
     def test_jackpot_after_10th_spin(self):
-        Spin.objects.create(user=self.user_one, round=self.round_one)
-        response = self.client.post(data={"user": self.user_one.pk, "round": self.round_one.id}, path=self.url)
+        full_round = Round.objects.create(numbers={1: 20, 2: 100, 3: 45, 4: 70, 5: 15, 6: 140, 7: 20, 8: 20, 9: 140, 10: 45})
+        Spin.objects.create(user=self.user_one, round=full_round)
+        response = self.client.post(data={"user": self.user_one.pk, "round": full_round.id}, path=self.url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["num"], 777)
         self.assertEqual(response.data["finished"], True)
-
-    def test_auto_create_new_round_after_finished(self):
-        Spin.objects.create(user=self.user_one, round=self.round_one, finished=True)
-        response = self.client.post(data={"user": self.user_one.pk, "round": self.round_one.pk}, path=self.url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["round"], 2)
 
     def test_create_first_spin_in_db(self):
         response = self.client.post(data={"user": self.user_one.pk, "round": self.round_one.id}, path=self.url)

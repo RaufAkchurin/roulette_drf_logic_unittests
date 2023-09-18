@@ -67,33 +67,44 @@ class SpinView(viewsets.ModelViewSet):
                 user=user,
                 round=round_new,
             )
+            #  logging number
+            round_new.numbers.update({num: user.id})
+            round_new.save()
+            round_new.refresh_from_db()
+
+            #  response generation
             serialized_data = SpinSerializer(new_spin).data
             serialized_data.update({"num": num})
             return Response(data=serialized_data, status=status.HTTP_200_OK)
 
-        round = request.data.get("round", None)
+        else:
 
-        # last_round_db = Spin.objects.order_by("round").last().round
-        # if int(round) < int(last_round_db):
-        #     raise ValidationError("Sorry you round is not latest")
+            # last_round_db = Spin.objects.order_by("round").last().round
+            # if int(round) < int(last_round_db):
+            #     raise ValidationError("Sorry you round is not latest")
 
-        latest_spin = Spin.objects.last()
-        round_finished = Spin.objects.filter(round=round, finished=True).exists()
-        round_actual = Round.objects.filter(id=round).last()
-        round_last_step = len(round_actual.numbers.items())
+            latest_spin = Spin.objects.last()
+            round = request.data.get("round", None)
+            round_finished = Spin.objects.filter(round=round, finished=True).exists()
+            round_actual = Round.objects.last()
+            round_last_step = len(round_actual.numbers.items())
 
-        if not round_finished:
-            if round_last_step <= 9:
-                num = get_random_from_dict_with_weith(round_actual)
-                new_spin = Spin.objects.create(
-                    user=user,
-                    round=round_actual,
-                )
-                round_actual.numbers.update({num: user})
-                round_actual.refresh_from_db()
-                serialized_data = SpinSerializer(new_spin).data
-                serialized_data.update({"num": num})
-                return Response(data=serialized_data, status=status.HTTP_200_OK)
+            if not round_finished:
+                if round_last_step <= 9:
+                    num = get_random_from_dict_with_weith(round_actual)
+                    new_spin = Spin.objects.create(
+                        user=user,
+                        round=round_actual,
+                    )
+                    #  logging number
+                    round_actual.numbers.update({num: user.id})
+                    round_actual.save()
+                    round_actual.refresh_from_db()
+
+                    #  response generation
+                    serialized_data = SpinSerializer(new_spin).data
+                    serialized_data.update({"num": num})
+                    return Response(data=serialized_data, status=status.HTTP_200_OK)
 
             if round_last_step == 10:  # Jackpot
                 latest_spin.finished = True
@@ -105,7 +116,7 @@ class SpinView(viewsets.ModelViewSet):
                 return Response(data=serialized_data, status=status.HTTP_200_OK)
 
         if round_finished:
-            num = 0
+            num = get_random_from_dict_with_weith(round_actual)
             round_new = Round.objects.create()
             new_spin = Spin.objects.create(
                 user=user,
@@ -118,15 +129,6 @@ class SpinView(viewsets.ModelViewSet):
             raise ValidationError("Unknown mistake in server")
 
 
-# def get_random_from_array(start_round: bool = False, rest_values: Optional[str] = None) -> Tuple[int, str]:
-#     if start_round:
-#         rest_values = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-#     else:
-#         rest_values = rest_values.split(",")
-#     random_num = random.choice(rest_values)
-#     rest_values.remove(random_num)
-#     return int(random_num), ",".join(rest_values)
-
 def get_random_from_dict_with_weith(round: Round):
     defaul_values = {1: 20, 2: 100, 3: 45, 4: 70, 5: 15, 6: 140, 7: 20, 8: 20, 9: 140, 10: 45}
     if len(round.numbers) == 0:
@@ -136,23 +138,19 @@ def get_random_from_dict_with_weith(round: Round):
         for number in round.numbers:
             defaul_values.pop(int(number), None)
         rest_values = defaul_values
-
     # Сумма всех вероятностей
     total_prob = sum(rest_values.values())
-
     # Генерация случайного числа в диапазоне от 1 до суммы вероятностей
     rand_num = random.randint(1, total_prob)
-
     # Перебор ключей и вычитание вероятности каждого ключа
     for key, prob in rest_values.items():
         rand_num -= prob
         if rand_num <= 0:
             return key
 
+
+
 # TODO finish перенести в раунд
-# TODO внедрить запись логов
-# TODO доработать уникальность выпадающих значений
-# TODO тест на уникальность значений
 
 # TODO только самые бооольшие 3 значения в статистике сделать
 # TODO отрефакторить убрать из модели рест вэлью по умолчанию

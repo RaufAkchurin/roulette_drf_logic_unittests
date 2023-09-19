@@ -9,10 +9,10 @@ class Round(models.Model):
     finished = models.BooleanField(default=False)
 
     @classmethod
-    def logging(cls, round, num, user):
-        round.numbers.update({num: user.id})
-        round.save()
-        round.refresh_from_db()
+    def logging(cls, _round, num, user):
+        _round.numbers.update({num: user.id})
+        _round.save()
+        _round.refresh_from_db()
 
     def __str__(self):
         return f"id - {self.id}, numbers - {self.numbers}"

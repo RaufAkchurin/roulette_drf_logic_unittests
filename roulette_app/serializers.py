@@ -22,8 +22,3 @@ class SpinSerializer(serializers.ModelSerializer):
     class Meta:
         model = Spin
         fields = "__all__"
-
-    def validate_user(self, value):
-        if not value:
-            raise serializers.ValidationError("User field cant be empty")
-        return value

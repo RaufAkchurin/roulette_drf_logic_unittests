@@ -16,13 +16,12 @@ class StatisticView(APIView):
         if Round.objects.exists():
             rounds_statistic = {}
             rounds = Round.objects.annotate()
-            for round in rounds:
-                users = len(set(round.numbers.values()))
-                rounds_statistic.update({round.pk: users})
+            for _round in rounds:
+                users = len(set(_round.numbers.values()))
+                rounds_statistic.update({_round.pk: users})
 
             active_users = {}
             users_with_spin = User.objects.annotate(spins_count=Count('user_spins'))
-
             count = 0
             for user in users_with_spin.order_by("-spins_count")[:3]:
                 distinct_rounds = Spin.objects.filter(user=user.id).values("round").distinct()
@@ -37,9 +36,6 @@ class StatisticView(APIView):
                                 "total_spin_optional": user.spins_count,
                             }}
                     )
-
-
-
                 response_data = {
                     "rounds_statistic": rounds_statistic,
                     "active_users": active_users
@@ -112,13 +108,13 @@ class SpinView(viewsets.ModelViewSet):
                 raise ValidationError("Unknown mistake in server")
 
 
-def get_random_from_dict_with_weith(round: Round):
+def get_random_from_dict_with_weith(_round: Round):
     defaul_values = {1: 20, 2: 100, 3: 45, 4: 70, 5: 15, 6: 140, 7: 20, 8: 20, 9: 140, 10: 45}
-    if len(round.numbers) == 0:
+    if len(_round.numbers) == 0:
         rest_values = {1: 20, 2: 100, 3: 45, 4: 70, 5: 15, 6: 140, 7: 20, 8: 20, 9: 140, 10: 45}
 
     else:
-        for number in round.numbers:
+        for number in _round.numbers:
             defaul_values.pop(int(number), None)
         rest_values = defaul_values
     # Сумма всех вероятностей
@@ -131,6 +127,8 @@ def get_random_from_dict_with_weith(round: Round):
         if rand_num <= 0:
             return key
 
-# TODO отрефакторить респонсы в отельный метод попытаться вынести
+
 # TODO перепроверить работу весов
+# TODO c сериалайзером разобратсья (лишнее снести)
 # TODO упаковать в докер
+

@@ -27,7 +27,7 @@ class Spin(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="user",
+        related_name="user_spins",
     )
     created_at = models.DateTimeField(auto_now=True)
 

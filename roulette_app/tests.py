@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -123,7 +125,7 @@ class StatisticTestCase(APITestCase):
         # 3 user
         for i in range(4):
             Spin.objects.create(round=self.round_four, user=self.user_three)
-        for i in range(5):
+        for i in range(6):
             Spin.objects.create(round=self.round_five, user=self.user_three)
 
         # 5 user
@@ -139,17 +141,21 @@ class StatisticTestCase(APITestCase):
         self.assertEqual(response.data["rounds_statistic"], rounds_statistic_expected)
 
         active_users_expected = {
-            '2': {'id': 2,
+            '1': {'id': 2,
                   'rounds_count': 2,
                   'spin_per_round': 6.0,
                   'total_spin_optional': 12},
-            '3': {'id': 3,
+            '2': {'id': 3,
                   'rounds_count': 2,
-                  'spin_per_round': 4.5,
-                  'total_spin_optional': 9},
-            '4': {'id': 5,
+                  'spin_per_round': 5,
+                  'total_spin_optional': 10},
+            '3': {'id': 5,
                   'rounds_count': 2,
                   'spin_per_round': 4.5,
                   'total_spin_optional': 9}}
+
+        pprint(response.data["active_users"])
+        print("*"*100)
+        pprint(active_users_expected)
 
         self.assertEqual(response.data["active_users"], active_users_expected)

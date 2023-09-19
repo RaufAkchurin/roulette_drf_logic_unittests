@@ -1,5 +1,6 @@
 from typing import Tuple, Optional
 
+from django.db.models import Count
 from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -23,23 +24,26 @@ class StatisticView(APIView):
 
             active_users = {}
             spin_all = Spin.objects.all()
-            users_all = User.objects.all()
+            users_with_spin = User.objects.annotate(spins_count=Count('user_spins'))
 
             count = 0
-            for user in users_all:
+            for user in users_with_spin.order_by("-spins_count")[:3]:
+
                 distinct_rounds = spin_all.filter(user=user.id).values("round").distinct()
                 if distinct_rounds.count():
                     count += 1
-                    total_spin = spin_all.filter(user=user.id).count()
+                    # total_spin = spin_all.filter(user=user.id).count()
                     active_users.update({
                         f"{count}":
                             {
                                 "id": user.pk,
                                 "rounds_count": distinct_rounds.count(),
-                                "spin_per_round": total_spin / distinct_rounds.count(),
-                                "total_spin_optional": total_spin,
+                                "spin_per_round": user.spins_count / distinct_rounds.count(),
+                                "total_spin_optional": user.spins_count,
                             }}
                     )
+
+
 
                 response_data = {
                     "rounds_statistic": rounds_statistic,
@@ -132,7 +136,6 @@ def get_random_from_dict_with_weith(round: Round):
         if rand_num <= 0:
             return key
 
-# TODO только самые бооольшие 3 значения в статистике сделать
 # TODO отрефакторить респонсы в отельный метод попытаться вынести
 # TODO перепроверить работу весов
 # TODO упаковать в докер

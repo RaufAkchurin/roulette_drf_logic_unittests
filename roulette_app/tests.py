@@ -4,6 +4,7 @@ from rest_framework.test import APITestCase
 from rest_framework.reverse import reverse
 from roulette_app.models import Spin, Round
 
+
 # Create your tests here.
 
 
@@ -52,7 +53,8 @@ class SpinTestCase(APITestCase):
         self.assertEqual(response.data["user"], 1)
 
     def test_jackpot_after_10th_spin(self):
-        full_round = Round.objects.create(numbers={1: 20, 2: 100, 3: 45, 4: 70, 5: 15, 6: 140, 7: 20, 8: 20, 9: 140, 10: 45})
+        full_round = Round.objects.create(
+            numbers={1: 20, 2: 100, 3: 45, 4: 70, 5: 15, 6: 140, 7: 20, 8: 20, 9: 140, 10: 45})
         Spin.objects.create(user=self.user_one, round=full_round)
         response = self.client.post(data={"user": self.user_one.pk, "round": full_round.id}, path=self.url)
 
@@ -70,17 +72,19 @@ class SpinTestCase(APITestCase):
         round_from_db = Round.objects.last()
         self.assertEqual(len(round_from_db.numbers), 1)
 
-    def test_empty_user(self):
-        response = self.client.post(data={"round": self.round_one.id}, path=self.url)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_validate_user(self):
-        response = self.client.post(data={"user": [1, 2, 3], "round": self.round_one.id}, path=self.url)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
     def test_without_round(self):
         response = self.client.post(data={"user": self.user_one.pk}, path=self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_without_user(self):
+        response = self.client.post(data={"round": self.round_one.pk}, path=self.url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data[0], "This user not correct")
+
+    def test_user_validation(self):
+        response = self.client.post(data={"round": self.round_one.pk, "user": [1, 2, 3]}, path=self.url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data[0], "This user not correct")
 
 
 class StatisticTestCase(APITestCase):

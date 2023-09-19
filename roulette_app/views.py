@@ -56,8 +56,12 @@ class SpinView(viewsets.ModelViewSet):
     serializer_class = SpinSerializer
 
     def create(self, request, *args, **kwargs):
-        user_id = request.data.get("user")
+        user_id = request.data.get("user", None)
+
         user = User.objects.filter(id=user_id).last()
+        if user is None:
+            raise ValidationError("This user not correct")
+
         round_actual = Round.objects.last()
 
         #  Проверка наличия первого раунда

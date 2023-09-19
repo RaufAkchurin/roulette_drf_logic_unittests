@@ -117,11 +117,8 @@ def get_random_from_dict_with_weith(_round: Round):
         for number in _round.numbers:
             defaul_values.pop(int(number), None)
         rest_values = defaul_values
-    # Сумма всех вероятностей
     total_prob = sum(rest_values.values())
-    # Генерация случайного числа в диапазоне от 1 до суммы вероятностей
     rand_num = random.randint(1, total_prob)
-    # Перебор ключей и вычитание вероятности каждого ключа
     for key, prob in rest_values.items():
         rand_num -= prob
         if rand_num <= 0:

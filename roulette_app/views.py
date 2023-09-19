@@ -13,26 +13,21 @@ from roulette_app.serializers import SpinSerializer
 
 class StatisticView(APIView):
     def get(self, request, *args, **kwargs):
-        if Spin.objects.exists():
-            rounds = Spin.objects.values("round").distinct()
-            rounds_list = [item['round'] for item in rounds if 'round' in item]
-
+        if Round.objects.exists():
             rounds_statistic = {}
-            for round in rounds_list:
-                users_in_round = Spin.objects.filter(round=round).values("user_id").distinct().count()
-                rounds_statistic.update({round: users_in_round})
+            rounds = Round.objects.annotate()
+            for round in rounds:
+                users = len(set(round.numbers.values()))
+                rounds_statistic.update({round.pk: users})
 
             active_users = {}
-            spin_all = Spin.objects.all()
             users_with_spin = User.objects.annotate(spins_count=Count('user_spins'))
 
             count = 0
             for user in users_with_spin.order_by("-spins_count")[:3]:
-
-                distinct_rounds = spin_all.filter(user=user.id).values("round").distinct()
+                distinct_rounds = Spin.objects.filter(user=user.id).values("round").distinct()
                 if distinct_rounds.count():
                     count += 1
-                    # total_spin = spin_all.filter(user=user.id).count()
                     active_users.update({
                         f"{count}":
                             {

@@ -114,30 +114,44 @@ class StatisticTestCase(APITestCase):
         # 1 user
         for i in range(3):
             Spin.objects.create(round=self.round_one, user=self.user_one)
+            self.round_one.numbers.update({i: self.user_one.pk})
+            self.round_one.save()
 
         # 2 user
 
         for i in range(5):
             Spin.objects.create(round=self.round_two, user=self.user_two)
+            self.round_two.numbers.update({i: self.user_one.pk})
+            self.round_two.save()
         for i in range(7):
             Spin.objects.create(round=self.round_three, user=self.user_two)
+            self.round_three.numbers.update({i: self.user_one.pk})
+            self.round_three.save()
 
         # 3 user
         for i in range(4):
             Spin.objects.create(round=self.round_four, user=self.user_three)
+            self.round_four.numbers.update({i: self.user_one.pk})
+            self.round_four.save()
         for i in range(6):
             Spin.objects.create(round=self.round_five, user=self.user_three)
+            self.round_five.numbers.update({i: self.user_one.pk})
+            self.round_five.save()
 
         # 5 user
         for i in range(4):
             Spin.objects.create(round=self.round_six, user=self.user_five)
+            self.round_six.numbers.update({i: self.user_one.pk})
+            self.round_six.save()
         for i in range(5):
             Spin.objects.create(round=self.round_seven, user=self.user_five)
+            self.round_seven.numbers.update({i: self.user_one.pk})
+            self.round_seven.save()
 
         response = (self.client.get(path=self.url))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        rounds_statistic_expected = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1}
+        rounds_statistic_expected = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 0}
         self.assertEqual(response.data["rounds_statistic"], rounds_statistic_expected)
 
         active_users_expected = {
@@ -155,7 +169,7 @@ class StatisticTestCase(APITestCase):
                   'total_spin_optional': 9}}
 
         pprint(response.data["active_users"])
-        print("*"*100)
+        print("*" * 100)
         pprint(active_users_expected)
 
         self.assertEqual(response.data["active_users"], active_users_expected)
